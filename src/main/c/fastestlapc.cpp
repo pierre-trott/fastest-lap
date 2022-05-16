@@ -636,7 +636,7 @@ void print_tables()
     std::cout << "Table vector: " << table_scalar.size() << " vectors" << std::endl;
 
     for (const auto& vec : table_vector)
-        std::cout << "    -> " << vec.first.size() << std::endl;
+        std::cout << "    -> " << vec.first << " (" << vec.second.size() << ")" << std::endl;
 }
 
 
@@ -937,6 +937,8 @@ struct Optimal_laptime_configuration
 
         if ( doc.has_element("options/sigma") ) sigma = doc.get_element("options/sigma").get_value(scalar());
 
+        if ( doc.has_element("options/compute_sensitivity") ) compute_sensitivity = doc.get_element("options/compute_sensitivity").get_value(bool());
+
         // Prepare control variables
         if ( doc.has_element("options/control_variables") )
         {
@@ -994,6 +996,7 @@ struct Optimal_laptime_configuration
     bool is_direct                    = get_default_is_direct();// Compute direct simulation
     bool is_closed                    = true;                   // Compute closed simulation
     bool set_initial_condition        = false;                  // If an initial condition has to be set
+    bool compute_sensitivity          = false;                  // To compute sensitivity w.r.t. parameters
     scalar sigma                      = 0.5;                    // Scheme used (0.5:Crank Nicolson, 1.0:Implicit Euler)
     std::string save_variables_prefix = "run/";                 // Prefix used to save the variables in the table
     std::vector<std::string> variables_to_save{};               // Variables chosen to be saved
@@ -1120,8 +1123,9 @@ void compute_optimal_laptime(vehicle_t& vehicle, Track_by_polynomial& track, con
     std::vector<scalar> arclength(s,s+n_points);
     Optimal_laptime<typename vehicle_t::vehicle_ad_curvilinear> opt_laptime;
     typename Optimal_laptime<typename vehicle_t::vehicle_ad_curvilinear>::Options opts;
-    opts.print_level = conf.print_level;
-    opts.sigma       = conf.sigma;
+    opts.print_level      = conf.print_level;
+    opts.sigma            = conf.sigma;
+    opts.check_optimality = conf.compute_sensitivity;
 
     // (5.2.a) Start from steady-state
     if ( !conf.warm_start )
